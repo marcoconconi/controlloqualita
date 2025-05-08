@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Controllo Qualità{% endblock %}</title>
+
+  <!-- CSS jQuery UI locale -->
+  <link rel="stylesheet"
+        href="{% static 'controlloqualita/css/jquery-ui.min.css' %}">
+  <!-- Tuo CSS -->
+  <link rel="stylesheet" href="{% static 'controlloqualita/css/style.css' %}">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="{% url 'dashboard' %}">Dashboard</a> |
+      <a href="{% url 'upload_csv' %}">Import CSV</a> |
+      {% if user.is_authenticated %}
+        
+          <form action="{% url 'logout' %}" method="post" style="display:inline">
+            {% csrf_token %}
+            <button type="submit" style="background:none;border:none;color:#00f;cursor:pointer;">
+              Logout
+            </button>
+          </form>        
+        
+        
+      {% else %}
+        <a href="{% url 'login' %}">Login</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main>
+    {% block content %}
+    <!-- qui verrà inserito il contenuto dei template figlio -->
+    {% endblock %}
+  </main>
+
+  <footer>
+    <p>&copy; {{ now|date:"Y" }} Ponzi S.p.A.</p>
+  </footer>
+
+  <!-- jQuery core -->
+  <script src="{% static 'controlloqualita/js/jquery-3.6.0.min.js' %}"></script>
+  <!-- jQuery UI -->
+  <script src="{% static 'controlloqualita/js/jquery-ui.min.js' %}"></script>
+  <!-- Localizzazioni Datepicker -->
+  <script src="{% static 'controlloqualita/js/jquery-ui-i18n.min.js' %}"></script>
+
+  <script>
+    $(function(){
+      // Preleva le impostazioni italiane
+      var itOpts = $.datepicker.regional['it'] || {};
+      // Unisci le tue opzioni a quelle italiane
+      var opts = $.extend({}, itOpts, {
+        dateFormat: 'dd-mm-yy',
+        changeMonth: true,
+        changeYear: true,
+        showAnim: 'slideDown'
+      });
+      // Inizializza tutti gli input con classe .datepicker
+      $('.datepicker').datepicker(opts);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{# templates/two_factor/core/login.html #}
+{% extends "two_factor/_base.html" %}
+{% load i18n two_factor_tags widget_tweaks %}
+
+{% block tf_title %}{% trans "Accesso" %}{% endblock %}
+
+{% block tf_content %}
+  <h2 class="text-center mb-4">{% trans "Autenticazione a due fattori" %}</h2>
+
+  {# messaggio step corrente ------------------------------------------------- #}
+  {% if wizard.steps.current == 'auth' %}
+      <p class="text-center text-muted">{% trans "Inserisci username e password" %}</p>
+  {% elif wizard.steps.current == 'token' %}
+      <p class="text-center text-muted">{{ device|as_verbose_action }}</p>
+  {% elif wizard.steps.current == 'backup' %}
+      <p class="text-center text-muted">{% trans "Inserisci un token di backup" %}</p>
+  {% endif %}
+
+  <form method="post" novalidate class="needs-validation">
+      {% csrf_token %}
+      {% include "two_factor/_wizard_management.html" %}
+      {{ wizard.management_form }}   {# <<–– UNICA OCCORRENZA #}
+
+      {# campi del form corrente #}
+      {% include "two_factor/_wizard_forms.html" %}
+
+      <button class="btn btn-primary w-100 mt-3" type="submit">
+        {% if wizard.steps.current == 'auth' %}
+          {% trans "Avanti" %}
+        {% else %}
+          {% trans "Verifica" %}
+        {% endif %}
+      </button>
+
+      {# –– metodi alternativi (altri device) –– #}
+      {% if other_devices %}
+        <hr class="my-4">
+        <p class="text-center">{% trans "Oppure scegli un altro metodo:" %}</p>
+        <div class="d-grid gap-2">
+          {% for other in other_devices %}
+            <button name="challenge_device" value="{{ other.persistent_id }}"
+                    class="btn btn-outline-secondary">
+                {{ other|as_action }}
+            </button>
+          {% endfor %}
+        </div>
+      {% endif %}
+  </form>
+{% endblock %}

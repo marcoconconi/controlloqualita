@@ -1,0 +1,217 @@
+{% extends "controlloqualita/base.html" %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mb-4">Dashboard – Filtri</h1>
+
+  {# --------------------------- FORM FILTRI (GET) -------------------- #}
+  <form id="filter-form" method="get" class="row g-3 align-items-end">
+
+    {# date from #}
+    <div class="col-md-3">
+      <label for="{{ form.date_from.id_for_label }}" class="form-label">
+        {{ form.date_from.label }}
+      </label>
+      {{ form.date_from }}
+      {% if form.date_from.errors %}
+        <div class="text-danger small">{{ form.date_from.errors }}</div>
+      {% endif %}
+    </div>
+
+    {# date to #}
+    <div class="col-md-3">
+      <label for="{{ form.date_to.id_for_label }}" class="form-label">
+        {{ form.date_to.label }}
+      </label>
+      {{ form.date_to }}
+      {% if form.date_to.errors %}
+        <div class="text-danger small">{{ form.date_to.errors }}</div>
+      {% endif %}
+    </div>
+
+    {# cliente #}
+    <div class="col-md-3">
+      <label for="{{ form.client.id_for_label }}" class="form-label">
+        {{ form.client.label }}
+      </label>
+      {{ form.client }}
+      {% if form.client.errors %}
+        <div class="text-danger small">{{ form.client.errors }}</div>
+      {% endif %}
+    </div>
+
+    {# redattore #}
+    <div class="col-md-3">
+      <label for="{{ form.redattore.id_for_label }}" class="form-label">
+        {{ form.redattore.label }}
+      </label>
+      {{ form.redattore }}
+      {% if form.redattore.errors %}
+        <div class="text-danger small">{{ form.redattore.errors }}</div>
+      {% endif %}
+    </div>
+
+    {# page-size #}
+    <div class="col-md-2">
+      <label class="form-label">Mostra</label>
+      <select name="page_size" class="form-select" onchange="this.form.submit()">
+        {% for n in page_size_options %}
+          <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {# ---- BUTTONS ---- #}
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary">Filtra</button>
+
+      <button type="submit" name="export" value="xlsx" class="btn btn-success ms-2">
+        Esporta in XLSX
+      </button>
+
+      <button type="submit" name="export_quality" value="1" class="btn btn-warning ms-2">
+        Report Qualità
+      </button>
+
+      {% if user.is_staff %}
+        <!-- apre il modal di conferma -->
+        <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal"
+                data-bs-target="#confirmDeleteModal">
+          Elimina record filtrati
+        </button>
+      {% endif %}
+    </div>
+  </form>
+
+  <hr class="my-4">
+  <p class="small text-muted">Totale elementi trovati: {{ total_count }}</p>
+
+  {# --------------------------- TABELLONE --------------------------- #}
+  {% if records %}
+    <div class="table-responsive">
+      <table class="table table-striped table-hover">
+        <thead class="table-light">
+          <tr>
+            <th>ID Richiesta</th><th>CF</th><th>Cliente</th>
+            <th>Servizio</th><th>Data Evasione</th><th>Operatore</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+            <tr>
+              <td>{{ r.identificativo_richiesta }}</td>
+              <td>{{ r.codice_fiscale_richiesta }}</td>
+              <td>{{ r.ragione_sociale_cliente }}</td>
+              <td>{{ r.servizio }}</td>
+              <td>{{ r.data_evasione }}</td>
+              <td>{{ r.operatore }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# -------- PAGINAZIONE -------- #}
+    <nav aria-label="Page navigation">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.previous_page_number }}&page_size={{ per_page }}{% for k,v in request.GET.items %}{% if k not in 'page page_size' %}&{{k}}={{v}}{% endif %}{% endfor %}">« Precedente</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">« Precedente</span></li>
+        {% endif %}
+
+        {% for num in paginator.page_range %}
+          {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item">
+              <a class="page-link"
+                 href="?page={{ num }}&page_size={{ per_page }}{% for k,v in request.GET.items %}{% if k not in 'page page_size' %}&{{k}}={{v}}{% endif %}{% endfor %}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link"
+               href="?page={{ page_obj.next_page_number }}&page_size={{ per_page }}{% for k,v in request.GET.items %}{% if k not in 'page page_size' %}&{{k}}={{v}}{% endif %}{% endfor %}">Successivo »</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Successivo »</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% else %}
+    <div class="alert alert-warning">Nessun dato trovato.</div>
+  {% endif %}
+</div>
+
+{# ================= MODAL DI CONFERMA DELETE (staff only) ================ #}
+{% if user.is_staff %}
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Conferma eliminazione</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Sei sicuro di voler eliminare <strong>tutti</strong> i record attualmente filtrati?
+           <br>Questa operazione è irreversibile.</p>
+      </div>
+      
+      
+      
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Annulla
+        </button>
+
+        {# -------------- FORM DELETE ---------------- #}
+        <form id="delete-form" method="post"
+              action="{% url 'controlloqualita:delete_filtered' %}">
+          {% csrf_token %}
+          <!-- gli hidden dei filtri verranno inseriti via JS -->
+          <button type="submit" class="btn btn-danger">Elimina</button>
+        </form>
+      </div>      
+      
+      
+      
+      
+      
+      
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const modal = document.getElementById('confirmDeleteModal');
+  modal.addEventListener('show.bs.modal', () => {
+    const src = document.getElementById('filter-form');
+    const dst = document.getElementById('delete-form');
+
+    // Pulisci eventuali hidden precedenti (eccetto csrf)
+    dst.querySelectorAll('input[type=hidden]:not([name=csrfmiddlewaretoken])')
+       .forEach(el => el.remove());
+
+    // Copia TUTTI i filtri valorizzati
+    [...src.elements].forEach(el => {
+      if (!el.name || !el.value) return;
+      const hidden = document.createElement('input');
+      hidden.type  = 'hidden';
+      hidden.name  = el.name;
+      hidden.value = el.value;
+      dst.appendChild(hidden);
+    });
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

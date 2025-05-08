@@ -1,0 +1,13 @@
+/* logo più leggibile in navbar  ------------------------------ */
+.brand-logo{
+  height: 80px;             /* <<< desktop */
+  max-width: 220px;         /* opzionale: allarga coerentemente */
+  object-fit: contain;
+}
+
+/* riduci solo su schermi piccoli */
+@media (max-width: 991.98px){   /* breakpoint Bootstrap “lg” */
+  .brand-logo{
+    height: 56px;           /* mobile leggermente più grande (opzione) */
+  }
+}

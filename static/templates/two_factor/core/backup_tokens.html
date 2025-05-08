@@ -1,0 +1,33 @@
+{% extends "controlloqualita/base.html" %}
+{% load i18n widget_tweaks %}
+{% include "two_factor/_wizard_management.html" %}
+{% block title %}Backup Tokens – {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-md-6">
+    <h2 class="mb-4 text-center">Backup Tokens</h2>
+    <p>Questi token ti consentono di accedere se non hai accesso al tuo dispositivo OTP.</p>
+
+    {% if device.token_set.count %}
+      <ul class="list-group mb-3">
+        {% for token in device.token_set.all %}
+          <li class="list-group-item">{{ token.token }}</li>
+        {% endfor %}
+      </ul>
+      <p class="text-center"><em>Stampa o salva questi codici in un luogo sicuro.</em></p>
+    {% else %}
+      <p class="alert alert-warning">Non hai ancora token di backup.</p>
+    {% endif %}
+
+    <form method="post" class="d-flex justify-content-between">
+      {{ wizard.management_form }}
+      {% csrf_token %}
+      {% include "two_factor/_wizard_management.html" %}
+      {{ form.as_hidden }}
+      <button class="btn btn-outline-primary" type="submit">Genera nuovi token</button>
+      <a href="{% url 'two_factor:profile' %}" class="btn btn-link">← Torna alla Sicurezza</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

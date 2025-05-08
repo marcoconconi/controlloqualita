@@ -1,0 +1,141 @@
+{% extends "controlloqualita/base.html" %}
+{% load static %}
+
+{% block title %}KPI Live{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">KPI – Monitor live</h1>
+
+{# filtro ri‑usa DashboardFilterForm #}
+<form id="kpi-form" class="row g-3 mb-4">
+  {{ form.as_p }}
+  <div>
+    <button class="btn btn-primary">Ricalcola</button>
+  </div>
+</form>
+
+<hr>
+
+<div class="row">
+  <div class="col-md-6">
+    <h5>Media Qualità</h5>
+    <div id="bar-quality"></div>
+  </div>
+  <div class="col-md-6">
+    <h5>SLA in Tempo (%)</h5>
+    <div id="bar-sla"></div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-6">
+    <h5>Torte Esiti</h5>
+    <div id="pie-wrapper" class="d-flex flex-wrap gap-4"></div>
+  </div>
+  <div class="col-md-6">
+    <h5>Trend qualità (4 blocchi)</h5>
+    <div id="trend-line"></div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_media %}
+  {{ block.super }}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ------------------------------------------------------------------ */
+/* Helpers                                                            */
+/* ------------------------------------------------------------------ */
+function fetchKpi(){                    // invia i filtri e attende json
+  const params = new URLSearchParams(
+      new FormData(document.getElementById('kpi-form')));
+  return fetch("{% url 'controlloqualita:kpi_data' %}?"+params)
+         .then(r=>r.json());
+}
+
+/* ridisegna tutti i grafici */
+let barQ, barSLA, lineTrend;
+function renderCharts(data){
+  // --- bar qualità --------------------------------------------------
+  const ctxQ = document.getElementById('bar-quality');
+  if(barQ) barQ.destroy();
+  barQ = new Chart(ctxQ, {
+    type:'bar',
+    data:{
+      labels: data.qualita.labels,
+      datasets: data.qualita.datasets.map((d,i)=>({
+        label: d.name,
+        data: d.values,
+        borderWidth:1
+      }))
+    },
+    options:{scales:{y:{beginAtZero:true,max:10}}}
+  });
+
+  // --- bar SLA ------------------------------------------------------
+  const ctxS = document.getElementById('bar-sla');
+  if(barSLA) barSLA.destroy();
+  barSLA = new Chart(ctxS, {
+    type:'bar',
+    data:{
+      labels: data.tempi.labels,
+      datasets: data.tempi.datasets.map(d=>({
+        label:d.name,
+        data:d.values
+      }))
+    },
+    options:{scales:{y:{beginAtZero:true,max:100}}}
+  });
+
+  // --- torte --------------------------------------------------------
+  const wrap = document.getElementById('pie-wrapper');
+  wrap.innerHTML = "";
+  for(const cat of {{ CATS|safe }}){
+    if(!(cat in data.torte)) continue;
+    const canvas = document.createElement('canvas');
+    canvas.width = 220; canvas.height = 220;
+    wrap.append(canvas);
+    new Chart(canvas,{
+      type:'pie',
+      data:{
+        labels : data.torte[cat].labels,
+        datasets:[{data:data.torte[cat].values}]
+      },
+      options:{plugins:{title:{display:true,text:cat}}}
+    });
+  }
+
+  // --- trend --------------------------------------------------------
+  const ctxT = document.getElementById('trend-line');
+  if(lineTrend) lineTrend.destroy();
+  const labelsTrend = data.trend.EREDI.map(p=>p.label);   // tutte uguali
+  lineTrend = new Chart(ctxT,{
+    type:'line',
+    data:{
+      labels: labelsTrend,
+      datasets: {{ CATS|safe }}.map(cat=>({
+        label:cat,
+        data: data.trend[cat].map(p=>p.value),
+        spanGaps:true     // <‑‑ collega i buchi!
+      }))
+    },
+    options:{
+      scales:{y:{beginAtZero:true,max:10}}
+    }
+  });
+}
+
+/* submit ajax */
+document.getElementById('kpi-form').addEventListener('submit',ev=>{
+  ev.preventDefault();
+  fetchKpi().then(renderCharts);
+});
+
+/* prima render */
+fetchKpi().then(renderCharts);
+</script>
+{% endblock %}

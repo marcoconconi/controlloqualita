@@ -1,0 +1,72 @@
+{% extends "controlloqualita/base.html" %}
+{% load static %}
+
+{% block title %}Importa CSV – {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">
+          <i class="bi bi-upload me-1"></i>
+          Importa file CSV
+        </h4>
+      </div>
+
+      <div class="card-body">
+        <p class="text-muted small mb-4">
+          Seleziona il file <strong>.csv</strong> generato dal sistema “Controllo
+          Evaso” (max&nbsp;100 MiB) e premi <em>Carica</em>. <br>
+          I record verranno importati ed aggregati
+          automaticamente; verranno saltati gli <em>IdentificativoRichiesta</em>
+          già presenti.
+        </p>
+
+        <form method="post" enctype="multipart/form-data" class="needs-validation"
+              novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label for="csvfile" class="form-label fw-bold">
+              File CSV
+            </label>
+
+            <input class="form-control" type="file" id="csvfile" name="csvfile"
+                   accept=".csv,text/csv" required>
+
+            <div class="invalid-feedback">
+              Seleziona un file CSV valido.
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button class="btn btn-success" type="submit">
+              <i class="bi bi-cloud-arrow-up-fill me-1"></i>
+              Carica
+            </button>
+            <a href="{% url 'controlloqualita:dashboard' %}"
+               class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left"></i> Annulla
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# --------- script per convalida bootstrap (facoltativo) ------------- #}
+<script>
+(function () {
+  'use strict';
+  const forms = document.querySelectorAll('.needs-validation');
+  Array.from(forms).forEach(form => {
+    form.addEventListener('submit', ev => {
+      if (!form.checkValidity()) { ev.preventDefault(); ev.stopPropagation(); }
+      form.classList.add('was-validated');
+    }, false);
+  });
+})();
+</script>
+{% endblock %}

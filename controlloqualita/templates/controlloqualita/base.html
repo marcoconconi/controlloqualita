@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Controllo Qualità{% endblock %}</title>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="{% static 'controlloqualita/css/boot5/bootstrap.min.css' %}">
+  <!-- jQuery-UI -->
+  <link rel="stylesheet" href="{% static 'controlloqualita/css/jquery-ui.min.css' %}">
+  <!-- Select2 + tema BS5 -->
+  <link rel="stylesheet" href="{% static 'controlloqualita/css/select2.min.css' %}">
+  <link rel="stylesheet" href="{% static 'controlloqualita/css/boot5/select2-bootstrap-5-theme.min.css' %}">
+  <!-- CSS custom -->
+  <link rel="stylesheet" href="{% static 'controlloqualita/css/style.css' %}">
+</head>
+<body>
+<header>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+    <div class="container-fluid">
+      <a class="navbar-brand d-flex align-items-center gap-2"
+         href="{% url 'controlloqualita:dashboard' %}">
+        <img src="{% static 'controlloqualita/img/logo-ponzi.png' %}"
+             alt="Logo Ponzi"
+             class="brand-logo">
+      </a>      
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mainNavbar" aria-controls="mainNavbar"
+              aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}"
+               href="{% url 'controlloqualita:dashboard' %}"><i class="bi bi-bar-chart-line"></i> Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if request.resolver_match.url_name == 'upload_csv' %} active{% endif %}"
+               href="{% url 'controlloqualita:upload_csv' %}"><i class="bi bi-upload"></i> Import CSV</a>
+          </li>
+          {% if user.is_staff %}
+            <li class="nav-item">
+              <a class="nav-link{% if request.resolver_match.url_name == 'set_esiti' %} active{% endif %}"
+                 href="{% url 'controlloqualita:set_esiti' %}"><i class="bi bi-gear"></i> Set Esiti</a>
+            </li>
+          {% endif %}
+        </ul>
+
+        <ul class="navbar-nav">
+          {% if user.is_authenticated %}
+            <!-- menu utente -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button"
+                 data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-person-circle"></i> {{ user.username }}
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                <li>
+                  <a class="dropdown-item" href="{% url 'password_change' %}">
+                    <i class="bi bi-key"></i> Cambia password
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                {% if user.is_verified %}
+                  <li><a class="dropdown-item" href="{% url 'two_factor:profile' %}">
+                    <i class="bi bi-shield-lock"></i> Gestisci 2-FA</a></li>
+                {% else %}
+                  <li><a class="dropdown-item text-danger" href="{% url 'two_factor:setup' %}">
+                    <i class="bi bi-shield-exclamation"></i> Abilita 2-FA</a></li>
+                {% endif %}
+              </ul>
+            </li>
+
+            <!-- logout -->
+            <li class="nav-item ms-2">
+              <form action="{% url 'two_factor:logout' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger btn-sm" type="submit">
+                  <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+              </form>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a class="btn btn-outline-primary btn-sm" href="{% url 'two_factor:login' %}">
+                <i class="bi bi-box-arrow-in-right"></i> Login
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+{# ------------------ FLASH MESSAGES ------------------ #}
+<main class="container">
+
+{% if messages %}
+  <div class="container">
+    {% for msg in messages %}
+      {# mappa "error" → "danger" per lo stile Bootstrap #}
+      {% if msg.tags == 'error' %}
+        {% with lvl='danger' %}
+          <div class="alert alert-{{ lvl }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endwith %}
+      {% else %}
+        {# per success, warning, info usiamo direttamente msg.tags #}
+        <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+          {{ msg }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+
+
+
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="text-center py-3">
+  <small>&copy; {% now "Y" %} Ponzi S.p.A.</small>
+</footer>
+
+<!-- JS bundle -->
+<script src="{% static 'controlloqualita/js/jquery-3.6.0.min.js' %}"></script>
+<script src="{% static 'controlloqualita/js/boot5/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'controlloqualita/js/jquery-ui.min.js' %}"></script>
+<script src="{% static 'controlloqualita/js/jquery-ui-i18n.min.js' %}"></script>
+<script src="{% static 'controlloqualita/js/select2.min.js' %}"></script>
+
+<script>
+  $(function () {
+    /* date-picker */
+    const opts = $.extend({}, $.datepicker.regional['it'] || {}, {
+      dateFormat: 'dd-mm-yy', changeMonth: true, changeYear: true, showAnim: 'slideDown'
+    });
+    $('.datepicker').datepicker(opts);
+
+    /* select2 */
+    $('.select2').select2({
+      theme: 'bootstrap-5',
+      width: '100%',
+      placeholder: (_,el)=>$(el).data('placeholder'),
+      allowClear: true
+    });
+  });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,29 @@
+{% extends "controlloqualita/base.html" %}
+{% load i18n widget_tweaks %}
+
+{% block title %}Login – {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-md-4">
+    <h2 class="mb-4 text-center">Accedi</h2>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <div class="mb-3">
+        {{ form.username.label_tag }}
+        {{ form.username|add_class:"form-control"|attr:"placeholder:Username" }}
+        {{ form.username.errors }}
+      </div>
+      <div class="mb-3">
+        {{ form.password.label_tag }}
+        {{ form.password|add_class:"form-control"|attr:"placeholder:Password" }}
+        {{ form.password.errors }}
+      </div>
+      <button type="submit" class="btn btn-primary w-100">Accedi</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

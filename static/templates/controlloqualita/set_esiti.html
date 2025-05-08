@@ -1,0 +1,98 @@
+{% extends "controlloqualita/base.html" %}
+{% block title %}Configura Esiti{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mb-4">Configura Scoring Rules</h1>
+  <p>Legenda
+      <table style="border: 1px solid black; border-collapse: collapse;">
+        <tr>
+          <td style="border: 1px solid black; padding: 4px;"><strong>df</strong> -> decesso flag SI</td>
+          <td style="border: 1px solid black; padding: 4px;"><strong>lav</strong> -> posto lavoro</td>
+          <td style="border: 1px solid black; padding: 4px;"><strong>pen</strong> -> pensione</td>
+          <td style="border: 1px solid black; padding: 4px;"><strong>ban</strong> -> banca</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid black; padding: 4px;"><strong>tel</strong> -> telefono soggetto</td>
+          <td style="border: 1px solid black; padding: 4px;"><strong>note</strong> -> note interne</td>
+          <td style="border: 1px solid black; padding: 4px;"><strong>erd</strong> -> erede</td>
+          <td style="border: 1px solid black; padding: 4px;"><strong>res</strong> -> indirizzo residenza</td>
+        </tr>
+      </table> 
+  </p>
+  <!-- filtro per categoria -->
+  <form method="get" class="mb-3 row g-2 align-items-center">
+    <div class="col-auto">
+      <label for="id_category" class="col-form-label">Mostra categoria:</label>
+    </div>
+    <div class="col-auto">
+      <select name="category" id="id_category" class="form-select">
+        <option value="">— Tutte —</option>
+        {% for code,label in category_choices %}
+          <option value="{{ code }}" {% if code == selected_cat %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-primary">Filtra</button>
+    </div>
+  </form>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ formset.management_form }}
+
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Categoria</th>
+          <th>Espressione</th>
+          <th>Lettera</th>
+          <th>Valore</th>
+          <th>Elimina?</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for form in formset %}
+        <tr>
+          <td>
+            {{ form.category }}
+            {% if form.category.errors %}
+              <div class="text-danger small">{{ form.category.errors }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {{ form.expression }}
+            {% if form.expression.errors %}
+              <div class="text-danger small">{{ form.expression.errors }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {{ form.score_letter }}
+            {% if form.score_letter.errors %}
+              <div class="text-danger small">{{ form.score_letter.errors }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {{ form.score_value }}
+            {% if form.score_value.errors %}
+              <div class="text-danger small">{{ form.score_value.errors }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if form.can_delete %}
+              {{ form.DELETE }}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary">Salva Regole</button>
+    <a href="{% url 'controlloqualita:dashboard' %}" class="btn btn-secondary ms-2">Annulla</a>
+  </form>
+</div>
+{% endblock %}

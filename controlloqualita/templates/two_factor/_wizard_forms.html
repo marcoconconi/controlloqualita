@@ -1,0 +1,9 @@
+{# templates/two_factor/_wizard_forms.html #}
+{% load widget_tweaks %}
+{% for field in form.visible_fields %}
+  <div class="mb-3">
+      {{ field.label_tag }}
+      {{ field|add_class:"form-control"|attr:"autocomplete:off" }}
+      {{ field.errors }}
+  </div>
+{% endfor %}

@@ -1,0 +1,175 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Controllo Qualità{% endblock %}</title>
+
+  <!-- Bootstrap CSS locale -->
+  <link rel="stylesheet"
+        href="{% static 'controlloqualita/css/boot5/bootstrap.min.css' %}">
+
+  <!-- jQuery UI CSS locale -->
+  <link rel="stylesheet"
+        href="{% static 'controlloqualita/css/jquery-ui.min.css' %}">
+
+  <!-- Select2 CSS locale -->
+  <link rel="stylesheet"
+        href="{% static 'controlloqualita/css/select2.min.css' %}">
+  <!-- Se usi tema Bootstrap 5 per Select2 -->
+  <link rel="stylesheet"
+        href="{% static 'controlloqualita/css/boot5/select2-bootstrap-5-theme.min.css' %}">
+
+  <!-- Il tuo CSS -->
+  <link rel="stylesheet"
+        href="{% static 'controlloqualita/css/style.css' %}">
+</head>
+<body>
+<header>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+      <!-- Brand o logo -->
+      <a class="navbar-brand" href="{% url 'controlloqualita:dashboard' %}">
+        <i class="bi bi-speedometer2"></i> CQ
+      </a>
+      <!-- Toggler per mobile -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mainNavbar" aria-controls="mainNavbar"
+              aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <!-- Link di navigazione -->
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link{% if request.resolver_match.url_name == 'dashboard' %} active{% endif %}"
+               aria-current="page"
+               href="{% url 'controlloqualita:dashboard' %}">
+              <i class="bi bi-bar-chart-line"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link{% if request.resolver_match.url_name == 'upload_csv' %} active{% endif %}"
+               href="{% url 'controlloqualita:upload_csv' %}">
+              <i class="bi bi-upload"></i> Import CSV
+            </a>
+          </li>
+          {% if user.is_staff %}
+            <li class="nav-item">
+              <a class="nav-link{% if request.resolver_match.url_name == 'set_esiti' %} active{% endif %}"
+                 href="{% url 'controlloqualita:set_esiti' %}">
+                <i class="bi bi-gear"></i> Set Esiti
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+        <!-- Authentication -->
+        <ul class="navbar-nav">
+          {% if user.is_authenticated %}
+          
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="userMenu"
+                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <i class="bi bi-person-circle"></i> {{ user.username }}
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                  <li>
+                    <a class="dropdown-item" href="{% url 'password_change' %}">
+                      <i class="bi bi-key"></i> Cambia password
+                    </a>
+                  </li>
+                </ul>
+              </li>
+
+            <li><hr class="dropdown-divider"></li>
+          
+          
+            <li class="nav-item">
+              <form action="{% url 'two_factor:logout' %}"
+                    method="post" class="d-inline">
+                {% csrf_token %}
+                <button class="btn btn-outline-danger btn-sm" type="submit">
+                  <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+              </form>            
+            
+            </li>
+            
+            {% if user.is_verified %}
+              <!-- Utente già protetto -->
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'two_factor:profile' %}">
+                  <i class="bi bi-shield-lock"></i> 2-FA
+                </a>
+              </li>
+            {% else %}
+              <!-- Deve ancora configurare -->
+              <li class="nav-item">
+                <a class="nav-link text-danger" href="{% url 'two_factor:setup' %}">
+                  <i class="bi bi-shield-exclamation"></i> Abilita 2-FA
+                </a>
+              </li>
+            {% endif %}            
+            
+            
+            
+            
+            
+            
+            
+          {% else %}
+            <li class="nav-item">
+              <a class="btn btn-outline-primary btn-sm" href="{% url 'two_factor:login' %}">
+                <i class="bi bi-box-arrow-in-right"></i> Login
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="text-center py-3">
+    <small>&copy; {% now "Y" %} Ponzi S.p.A.</small>
+  </footer>
+
+  <!-- jQuery core -->
+  <script src="{% static 'controlloqualita/js/jquery-3.6.0.min.js' %}"></script>
+  <!-- Bootstrap JS (bundle include Popper) -->
+  <script src="{% static 'controlloqualita/js/boot5/bootstrap.bundle.min.js' %}"></script>
+  <!-- jQuery UI -->
+  <script src="{% static 'controlloqualita/js/jquery-ui.min.js' %}"></script>
+  <!-- Localizzazioni Datepicker -->
+  <script src="{% static 'controlloqualita/js/jquery-ui-i18n.min.js' %}"></script>
+  <!-- Select2 JS locale -->
+  <script src="{% static 'controlloqualita/js/select2.min.js' %}"></script>
+
+  <script>
+    $(function(){
+      // Datepicker in italiano
+      var itOpts = $.datepicker.regional['it'] || {};
+      var dpOpts = $.extend({}, itOpts, {
+        dateFormat: 'dd-mm-yy',
+        changeMonth: true,
+        changeYear: true,
+        showAnim: 'slideDown'
+      });
+      $('.datepicker').datepicker(dpOpts);
+
+      // Select2 sui select con classe .select2
+      $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: function(){
+          return $(this).data('placeholder');
+        },
+        allowClear: true
+      });
+    });
+  </script>
+</body>
+</html>

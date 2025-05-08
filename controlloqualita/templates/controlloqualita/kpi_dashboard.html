@@ -1,0 +1,150 @@
+{#  templates/controlloqualita/kpi_dashboard.html  #}
+{% extends "controlloqualita/base.html" %}
+{% load static %}
+
+{% block title %}KPI dinamici{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h1 class="mb-4">KPI – Dashboard interattiva</h1>
+
+  {# ------------------------- FILTRI ----------------------------------- #}
+  <form id="kpi-filter" class="row g-3 align-items-end mb-4">
+    {# date from #}
+    <div class="col-md-3">
+      <label class="form-label" for="{{ form.date_from.id_for_label }}">
+        {{ form.date_from.label }}
+      </label>
+      {{ form.date_from }}
+    </div>
+
+    {# date to #}
+    <div class="col-md-3">
+      <label class="form-label" for="{{ form.date_to.id_for_label }}">
+        {{ form.date_to.label }}
+      </label>
+      {{ form.date_to }}
+    </div>
+
+    {# cliente #}
+    <div class="col-md-3">
+      <label class="form-label" for="{{ form.client.id_for_label }}">
+        {{ form.client.label }}
+      </label>
+      {{ form.client }}
+    </div>
+
+    {# redattore #}
+    <div class="col-md-3">
+      <label class="form-label" for="{{ form.redattore.id_for_label }}">
+        {{ form.redattore.label }}
+      </label>
+      {{ form.redattore }}
+    </div>
+
+    <div class="col-auto">
+      <button class="btn btn-primary mt-2" type="submit">
+        <i class="bi bi-funnel"></i> Applica filtri
+      </button>
+    </div>
+  </form>
+
+  {# ------------------------- AREA GRAFICI ----------------------------- #}
+  <div id="charts-area" class="row g-4"></div>
+</div>
+{% endblock %}
+
+{% block extra_media %}
+  {{ block.super }}
+  {{ form.media }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+(function () {
+  /* ---------- helpers -------------------------------------------------- */
+  function newCanvas(id, title) {
+    const wrap = document.getElementById("charts-area");
+    const col  = document.createElement("div");
+    col.className = "col-xl-6";
+    col.innerHTML = `<h5 class="mb-2">${title}</h5>
+                     <canvas id="${id}"></canvas>`;
+    wrap.appendChild(col);
+    return document.getElementById(id).getContext("2d");
+  }
+
+  /* ---------- build charts --------------------------------------------- */
+  function renderCharts(data) {
+    const area = document.getElementById("charts-area");
+    area.innerHTML = "";                       // pulisci
+
+    /* --- qualità ------------------------------------------------------ */
+    new Chart(newCanvas("cQual", "Media qualità"), {
+      type: "bar",
+      data: { labels: data.qualita.labels,
+              datasets: data.qualita.datasets },
+      options: { responsive:true,
+                 scales:{y:{min:0,max:10}} }
+    });
+
+    /* --- % in SLA ----------------------------------------------------- */
+    new Chart(newCanvas("cTime", "% pratiche in SLA"), {
+      type: "bar",
+      data: { labels: data.tempi.labels,
+              datasets: data.tempi.datasets },
+      options: { responsive:true,
+                 scales:{y:{min:0,max:100,ticks:{callback:v=>v+"%"}}} }
+    });
+
+    /* --- torte per categoria ----------------------------------------- */
+    for (const [cat, pie] of Object.entries(data.torte)) {
+      new Chart(newCanvas("pie_"+cat, "Esiti "+cat), {
+        type: "pie",
+        data: { labels: pie.labels,
+                datasets:[{ data: pie.values }] },
+        options: { responsive:true }
+      });
+    }
+
+    /* --- trend lineare ------------------------------------------------ */
+    const trendSets = data.trend.datasets;   // già pronti dal backend
+    new Chart(newCanvas("cTrend", "Trend media qualità"), {
+      type: "line",
+      data: { labels: data.trend.labels,
+              datasets: trendSets },
+      options: { responsive:true,
+                 scales:{y:{min:0,max:10}},
+                 plugins:{legend:{position:"bottom"}} }
+    });
+  }
+
+  /* ---------- AJAX helper --------------------------------------------- */
+  async function fetchKpi(params) {
+    const url = new URL("{% url 'controlloqualita:kpi_data' %}", location.origin);
+    url.search = new URLSearchParams(params).toString();
+    const r = await fetch(url);
+    return r.json();
+  }
+
+  /* ---------- gestione form ------------------------------------------- */
+  const form = document.getElementById("kpi-filter");
+
+  async function handleSubmit(ev) {
+    if (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+    const params = Object.fromEntries(new FormData(form).entries());
+    const data   = await fetchKpi(params);
+    renderCharts(data);
+  }
+
+  form.addEventListener("submit", handleSubmit);
+
+  /* Primo caricamento con filtri di default ---------------------------- */
+  handleSubmit();     // nessun evento → niente loop
+})();
+</script>
+{% endblock %}

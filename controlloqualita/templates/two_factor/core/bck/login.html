@@ -1,0 +1,60 @@
+{% extends "controlloqualita/base.html" %}
+{% load i18n two_factor_tags widget_tweaks %}
+{% include "two_factor/_wizard_management.html" %}
+{% block extra_media %}
+  {{ form.media }}
+{% endblock %}
+
+{% block title %}Login 2FA – {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-md-5">
+    <h2 class="mb-4 text-center">Autenticazione a Due Fattori</h2>
+
+    {% if wizard.steps.current == 'auth' %}
+      <p class="text-center">Inserisci username e password:</p>
+    {% elif wizard.steps.current == 'token' %}
+      <p class="text-center">{{ device|as_verbose_action }}</p>
+    {% elif wizard.steps.current == 'backup' %}
+      <p class="text-center">Usa un token di backup:</p>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {{ wizard.management_form }}
+      {% csrf_token %}
+      {% include "_wizard_forms.html" %}
+      <div class="mb-3">
+        {% for field in form.visible_fields %}
+          <div class="mb-3">
+            {{ field.label_tag }}
+            {{ field|add_class:"form-control text-center"|attr:"autocomplete:off" }}
+            {{ field.errors }}
+          </div>
+        {% endfor %}
+      </div>
+      <button type="submit" class="btn btn-primary w-100 mt-3">
+        {% if wizard.steps.current == 'auth' %}Avanti{% else %}Verifica{% endif %}
+      </button>
+    </form>
+
+    {% if other_devices %}
+      <hr>
+      <p class="text-center">Oppure scegli un altro metodo:</p>
+      <div class="d-grid gap-2">
+        {% for other in other_devices %}
+          <form method="post">
+            {{ wizard.management_form }}
+            {% csrf_token %}
+            {% include "_wizard_forms.html" %}
+            <button name="challenge_device" value="{{ other.persistent_id }}"
+                    class="btn btn-outline-secondary">
+              {{ other|as_action }}
+            </button>
+          </form>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

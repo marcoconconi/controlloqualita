@@ -1,0 +1,21 @@
+{#  templates/two_factor/_base.html  #}
+{% extends "controlloqualita/base.html" %}
+{% load static %}
+
+{# ---- <title> ---- #}
+{% block title %}
+  {% block tf_title %}{% endblock %} – {{ block.super }}
+{% endblock %}
+
+{# ---- eventuali media extra ---- #}
+{% block extra_media %}
+  {{ block.super }}
+  {% if form %}{{ form.media }}{% endif %}
+{% endblock %}
+
+{# ---- contenuto pagine 2-FA ---- #}
+{% block content %}
+  <div class="mx-auto my-4" style="max-width:460px;">
+    {% block tf_content %}{% endblock %}
+  </div>
+{% endblock %}
